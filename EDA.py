@@ -39,11 +39,11 @@ Explore download history:
 '''
 
 # Download histogram:
-# dld_ext.research_id.hist(grid=False,bins=100)
-# plt.xlabel('Research ID')
-# plt.ylabel('Count')
+dld_ext.research_id.hist(grid=False,bins=100)
+plt.xlabel('Research ID')
+plt.ylabel('Count')
 # plt.savefig('figures/res_id_hist.png')
-# plt.show()
+plt.show()
 
 # Most downloaded:
 histos = dld_ext.research_id.value_counts()
@@ -81,32 +81,32 @@ print 'Out of {} total download dates.'.format(dld_ext.shape[0])
 Favorites data:
 '''
 
-# fav.UserID.hist(grid=False,bins=100)
-# plt.xlabel('User ID')
-# plt.ylabel('Count')
+fav.UserID.hist(grid=False,bins=100)
+plt.xlabel('User ID')
+plt.ylabel('Count')
 # plt.savefig('figures/user_faves.png')
-# plt.show()
-#
-# fav.content_id.hist(grid=False,bins=100)
-# plt.xlabel('Content ID')
-# plt.ylabel('Count')
+plt.show()
+
+fav.content_id.hist(grid=False,bins=100)
+plt.xlabel('Content ID')
+plt.ylabel('Count')
 # plt.savefig('figures/research_faves.png')
-# plt.show()
+plt.show()
 
 # Plot downloads/favorites together:
 
 # Downloads from usd:
-# usd.content_id.hist(grid=False,bins=100)
-# plt.xlabel('Content ID')
-# plt.ylabel('Count')
+usd.content_id.hist(grid=False,bins=100)
+plt.xlabel('Content ID')
+plt.ylabel('Count')
 # plt.savefig('figures/content_downloads_usd.png')
-# plt.show()
+plt.show()
 #
 usd.content_id.hist(grid=False,bins=100,normed=True)
 fav.content_id.hist(grid=False,bins=100,normed=True)
 plt.xlabel('Content ID')
 plt.ylabel('Count')
-plt.savefig('figures/research_dlds_faves.png')
+# plt.savefig('figures/research_dlds_faves.png')
 plt.show()
 
 '''
@@ -140,12 +140,12 @@ def filter_out_short_from_large(array1,array2):
         alarge = array2
         ashort = array1
 
-    mask = np.empty(nlarge, dtype=bool)
+    msk = np.empty(nlarge, dtype=bool)
     # print (mask == True).any()
     for i in xrange(nshort):
         tarr = alarge == ashort[i]
         if (tarr == True).any():
-            mask[int(np.where(tarr == True)[0])] = True
+            msk[int(np.where(tarr == True)[0])] = True
         # print mask[-1]
         # if mask[-1] == True:
         #     print i
@@ -153,7 +153,7 @@ def filter_out_short_from_large(array1,array2):
         #     # print (tarr == True).any()
         #     break
 
-    return mask, alarge[mask]
+    return msk, alarge[msk]
 
 def filter_out_uncommon_elements(array1,array2):
     '''
@@ -162,14 +162,14 @@ def filter_out_uncommon_elements(array1,array2):
     n1 = len(array1)
     n2 = len(array2)
 
-    mask = np.empty(n1, dtype=bool)
+    msk = np.empty(n1, dtype=bool)
 
     for i in xrange(n2):
         tarr = array1 == array2[i]
         if (tarr == True).any():
-            mask[int(np.where(tarr == True)[0])] = True
+            msk[int(np.where(tarr == True)[0])] = True
 
-    return mask, array1[mask]
+    return msk, array1[msk]
 
 # mask1, res_dld = filter_out_uncommon_elements(res_id_dld,res_id_rmd)
 # mask2, res_fav = filter_out_uncommon_elements(res_id_fav,res_id_rmd)
@@ -181,3 +181,89 @@ def filter_out_uncommon_elements(array1,array2):
 '''
 That absolutely did not work
 '''
+
+'''
+Use python sets on:
+# Research content downloaded (unique):
+res_id_dld
+# Research content with available metadata:
+res_id_rmd
+# Research content favorited (unique):
+res_id_fav
+(can also use np.setdiff1d(a,b) but less explicit)
+'''
+
+D = set(res_id_dld)
+R = set(res_id_rmd)
+F = set(res_id_fav)
+
+'''
+Total downloads and research metadata:
+'''
+# TD is the total number of documents, the union of downloads and reserach mdata:
+TD = R | D
+
+# V is the set of documents with existing mdata, not downloaded:
+V = TD - D
+
+# W is the set of documents downloaded yet no mdata exists for them
+W = TD - R
+
+# C is the intersection of D and R, documents downloaded with mdata:
+C = D & R #(C = TD - V - W)
+
+'''
+Total favorited and research metadata:
+'''
+# TF is the total favorited and with mdata:
+TF = R | F
+
+# N is the set of documents with mdata but not favorited:
+N = TF - F
+
+# M is the set of documents favorited for which we have no mdata:
+M = TF - R
+
+# G is the intersection of R and F, documents favorited with mdata:
+G = F & R #(G = TF - M - N)
+
+'''
+Total favorited and downloaded:
+'''
+# FD is the total favorited and downloaded:
+FD = F | D
+
+# P is the set of documents downloaded but not favorited:
+P = FD - F
+
+# Q is the set of documents favorited but not downloaded (hopefully empty):
+Q = FD - D  #(Note: this is the empty set)
+
+# J is the intersection of F and D, documents downloaded and favorited:
+J = F & D  #(Note: this set is F itself)
+
+res_dl = np.sort(np.array(list(C)))
+
+res_all = np.sort(np.array(list(TD)))
+
+'''
+Create Utility Matrix:
+'''
+
+# All users:
+all_usr = usr.UserID.unique()
+res_str = res_all.astype(str)
+all_usr = all_usr.astype(str)
+
+# Initialize the matrix:
+zero_data = np.zeros((all_usr.size,res_str.size))
+# utility = pd.DataFrame(zero_data, index=all_usr, columns=res_all, dtype=int)
+utility = pd.DataFrame(zero_data, columns=res_str, dtype=int)
+utility.insert(0, 'UserID', all_usr)
+
+for index in xrange(len(fav)):
+    user_id = str(fav.UserID[index])
+    content_id = str(fav.content_id[index])
+    utility.loc[utility['UserID'] == user_id, [content_id]] = 1
+
+utility.to_csv('data/utility_matrix.csv')
