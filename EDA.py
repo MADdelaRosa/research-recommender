@@ -266,4 +266,5 @@ for index in xrange(len(fav)):
     content_id = str(fav.content_id[index])
     utility.loc[utility['UserID'] == user_id, [content_id]] = 1
 
-utility.to_csv('data/utility_matrix.csv')
+utility.to_csv('data/utility_matrix.csv') # OR:
+# utility.to_csv('data/utility_matrix.csv', index=False)
