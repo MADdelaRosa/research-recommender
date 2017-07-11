@@ -5,15 +5,21 @@ from sklearn.model_selection import train_test_split
 import scipy.stats as scs
 import seaborn as sns
 import random
+from time import time
 
+
+start_time = time()
 '''
 Creates most basic recommender as a baseline test
 '''
 
 # Import utility matrix:
 
-utility = pd.read_csv('data/utility_matrix.csv').drop(['Unnamed: 0'],axis=1)
-fav = pd.read_csv('data/metadata/User-Research-Favorites.csv')
+utility = pd.read_csv('data/modified_data/utility_matrix.csv') # OR:
+# utility = pd.read_csv('data/modified_data/utility_matrix.csv').drop(['Unnamed: 0'],axis=1)
+
+# fav = pd.read_csv('data/metadata/User-Research-Favorites.csv')
+fav = pd.read_csv('data/modified_data/user-favorites.csv')
 top_favs = fav.content_id.value_counts()
 
 fav_list = top_favs.to_frame().rename(columns={'content_id':'count'}). \
@@ -89,12 +95,12 @@ def recommend_random_fav(dist, number):
     return np.random.choice(dist, size=number)
 
 # Create utility matrix only for those who have favorited at least one doc:
-mask = (utility.drop('UserID',1) > 0).any(axis=1)
-utility_favs = utility[mask].reset_index(drop=True)
+mask_favs = (utility.drop('UserID',1) > 0).any(axis=1)
+utility_favs = utility[mask_favs].reset_index(drop=True)
 
 # Create utility matrix only for those who have not favorited anything (newusrs):
-mask = (utility.drop('UserID',1) == 0).all(axis=1)
-utility_new = utility[mask].reset_index(drop=True)
+mask_new = (utility.drop('UserID',1) == 0).all(axis=1)
+utility_new = utility[mask_new].reset_index(drop=True)
 
 def plot_hist_basic(df, col):
     """
@@ -140,6 +146,10 @@ plot_kde(fav,'content_id')
 # plt.savefig('figures/research_faves_kde.png')
 plt.show()
 
+'''
+    Recommend most recent, according to subject preference:
+'''
+
 
 '''
 Test baseline recommender:
@@ -175,3 +185,6 @@ random_fav_score = score_baseline(utility_favs,fav_dist)
 print "The most naive baselines are:"
 print "Recommending top favorite: ", top_fav_score
 print "Recommending random favorite: ", random_fav_score
+
+end_time = time()
+print "Time elapsed: ", end_time - start_time
