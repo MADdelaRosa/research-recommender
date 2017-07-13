@@ -1,7 +1,7 @@
+from __future__ import division
 import pandas as pd
 import numpy as np
-import time as time
-from __future__ import division
+from time import time
 
 def jaccard_dist(a,b):
     '''
@@ -15,16 +15,19 @@ def jaccard_dist(a,b):
     dist: (float) Jaccard distance
     '''
 
-    intersect = np.dot(a,b)
-    s_ab = a + b
-    union = len(s_ab[s_ab > 0])
-
-    if union:
-        sim = intersect/union
+    if ((a == 0).all() and (b == 0).all()):
+        sim = 1.0
     else:
-        sim = 0
+        intersect = np.dot(a,b)
+        s_ab = a + b
+        union = float(len(s_ab[s_ab > 0]))
 
-    dist = 1 - sim
+        if union != 0:
+            sim = intersect/union
+        else:
+            sim = 0.0
+
+    dist = 1.0 - sim
 
     return dist
 
@@ -35,6 +38,7 @@ def jaccard_mat(df, axis=1, timer=False):
     INPUT:
     df: (pandas DataFrame) Utiility matrix of (usrs, items)
     axis: (int) Indicates similarity across rows (0) or columns (1)
+    timer: (bool) Whether to measure runtime
 
     OUTPUT:
     sim: (pandas DataFrame) Similarity matrix
@@ -42,7 +46,12 @@ def jaccard_mat(df, axis=1, timer=False):
     start_time = time()
 
     df_copy = df.copy()
-    users = df_copy.pop('UserID')
+
+    if df.columns[0] == 'UserID':
+        users = df_copy.pop('UserID')
+    else:
+        users = df_copy.index.values
+
     items = np.array(df_copy.columns)
 
     dimen = df_copy.shape[axis]
@@ -57,15 +66,58 @@ def jaccard_mat(df, axis=1, timer=False):
 
     for index0 in xrange(dimen):
         vec0 = df_copy.iloc[:,index0]
-        for index1 in xrange(dimen):
+        for index1 in xrange(index0 + 1, dimen):
             vec1 = df_copy.iloc[:,index1]
-            sim.iloc[index0,index1] = jaccard_dist(vec0,vec1)
+            jd = jaccard_dist(vec0,vec1)
+            sim.iloc[index0,index1] = jd
+            sim.iloc[index1,index0] = jd
 
     if timer:
         print "Jaccard distance computation took: ", time() - start_time
 
     return sim
 
+def jaccard_update(utility, sim, utility_entry, axis=1, timer=False):
+    '''
+    Updates similarity matrix after removing a given data point from utility matrix
+
+    INPUT:
+    utility: (pandas DataFrame) Original utliity matrix
+    sim: (pandas DataFrame) Original similarity matrix
+    utility_entry: (tuple) (usr,content) entry to remove in utility matrix (int, int)
+    axis: (int) Indicates similarity across rows (0) or columns (1)
+    timer: (bool) Whether to measure runtime
+
+    OUTPUT:
+    sim: (pandas DataFrame) New similarity matrix
+    '''
+
+    start_time = time()
+
+    df_copy = utility.copy()
+    user = utility_entry[0]
+    item = str(utility_entry[1])
+    df_copy.loc[df_copy.UserID == user, [item]] = 0
+    df_copy = df_copy.drop(['UserID'], axis=1)
+
+    dimen = df_copy.shape[axis]
+
+    if axis == 0:
+        df_copy = df_copy.T
+
+    index = df_copy.columns.get_loc(item)
+    vec1 = df_copy.iloc[:,index]
+    for i in xrange(dimen):
+        if i != index:
+            vec2 = df_copy.iloc[:,i]
+            jd = jaccard_dist(vec1,vec2)
+            sim.iloc[index,i] = jd
+            sim.iloc[i,index] = jd
+
+    if timer:
+        print "Jaccard update took: ", time() - start_time
+
+    return sim
 
 def cos_dist(a,b):
     '''
@@ -86,9 +138,28 @@ def cos_dist(a,b):
 
     return dist
 
-    # A = set(a)
-    # B = set(b)
-    #
-    # sim = len(A & B)/len(A | B)
-    #
-    # dist = 1 - sim
+def pairwise_jaccard(X):
+    """Computes the Jaccard distance between the rows of `X`.
+    """
+    # X = X.astype(bool).astype(int)
+
+    intrsct = X.dot(X.T)
+    row_sums = intrsct.diagonal()
+    unions = row_sums[:,None] + row_sums - intrsct
+    dist = 1.0 - intrsct / unions
+    return dist
+
+# st = time()
+# pairwise_jaccard(matts.T)
+# print "Time: ", time() - st
+
+# A = set(a)
+# B = set(b)
+#
+# sim = len(A & B)/len(A | B)
+#
+# dist = 1 - sim
+
+# st = time()
+# np.fill_diagonal(mat1.values, 0)
+# print "Took: ", time() - st

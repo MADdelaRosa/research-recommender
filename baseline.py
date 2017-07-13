@@ -18,6 +18,8 @@ Creates most basic recommender as a baseline test
 utility = pd.read_csv('data/modified_data/utility_matrix.csv') # OR:
 # utility = pd.read_csv('data/modified_data/utility_matrix.csv').drop(['Unnamed: 0'],axis=1)
 
+utility_dld = pd.read_csv('data/modified_data/utility_dld_matrix.csv')
+
 # fav = pd.read_csv('data/metadata/User-Research-Favorites.csv')
 fav = pd.read_csv('data/modified_data/user-favorites.csv')
 top_favs = fav.content_id.value_counts()
@@ -98,9 +100,18 @@ def recommend_random_fav(dist, number):
 mask_favs = (utility.drop('UserID',1) > 0).any(axis=1)
 utility_favs = utility[mask_favs].reset_index(drop=True)
 
+# Create utility matrix only for those who have dowloaded at least one doc:
+mask_dlds = (utility_dld.drop('UserID',1) > 0).any(axis=1)
+utility_d = utility_dld[mask_dlds].reset_index(drop=True)
+
+
 # Create utility matrix only for those who have not favorited anything (newusrs):
 mask_new = (utility.drop('UserID',1) == 0).all(axis=1)
 utility_new = utility[mask_new].reset_index(drop=True)
+
+# Create utility matrix only for those who have not downloaded anything (newusrs):
+mask_d_new = (utility_dld.drop('UserID',1) == 0).all(axis=1)
+utility_d_new = utility_dld[mask_d_new].reset_index(drop=True)
 
 def plot_hist_basic(df, col):
     """

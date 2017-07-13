@@ -514,6 +514,8 @@ def make_utility_matrix(users, content, favorites):
     return utility_matrix
 
 # utility = make_utility_matrix(usr_mod, res_all, fav)
+# utility_dld = make_utility_matrix(usr_mod, res_all, usd)
 
 ## utility.to_csv('data/modified_data/utility_matrix.csv') # OR:
 # utility.to_csv('data/modified_data/utility_matrix.csv', index=False)
+# utility_dld.to_csv('data/modified_data/utility_dld_matrix.csv', index=False)
