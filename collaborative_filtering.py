@@ -77,7 +77,7 @@ def jaccard_mat(df, axis=1, timer=False):
 
     return sim
 
-def jaccard_update(utility, sim, utility_entry, axis=1, timer=False):
+def jaccard_update(utility, sim, utility_entry, axis=1, return_util=True, timer=False):
     '''
     Updates similarity matrix after removing a given data point from utility matrix
 
@@ -114,10 +114,17 @@ def jaccard_update(utility, sim, utility_entry, axis=1, timer=False):
             sim.iloc[index,i] = jd
             sim.iloc[i,index] = jd
 
+    if return_util:
+        utility.loc[df_copy.UserID == user, [item]] = 0
+    del df_copy
+
     if timer:
         print "Jaccard update took: ", time() - start_time
 
-    return sim
+    if return_util:
+        return sim, Utiility
+    else:
+        return sim
 
 def cos_dist(a,b):
     '''
