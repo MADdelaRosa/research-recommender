@@ -90,8 +90,8 @@ if VALIDATE:
 
     user_dlds = pd.read_csv('data/modified_data/top_downloads_users.csv')
     # cutoff = 500    # corresponds to 30% of download signal
-    # cutoff = 100
-    cutoff = 10
+    cutoff = 100
+    # cutoff = 10
     # cutoff = 10
     top_users = user_dlds.UserID.values[0:cutoff]
 
