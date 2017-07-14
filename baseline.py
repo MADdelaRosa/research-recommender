@@ -7,28 +7,9 @@ import seaborn as sns
 import random
 from time import time
 
-
-start_time = time()
 '''
 Creates most basic recommender as a baseline test
 '''
-
-# Import utility matrix:
-
-utility = pd.read_csv('data/modified_data/utility_matrix.csv') # OR:
-# utility = pd.read_csv('data/modified_data/utility_matrix.csv').drop(['Unnamed: 0'],axis=1)
-
-utility_dld = pd.read_csv('data/modified_data/utility_dld_matrix.csv')
-
-# fav = pd.read_csv('data/metadata/User-Research-Favorites.csv')
-fav = pd.read_csv('data/modified_data/user-favorites.csv')
-top_favs = fav.content_id.value_counts()
-
-fav_list = top_favs.to_frame().rename(columns={'content_id':'count'}). \
-    reset_index().rename(columns={'index':'content_id'}).drop('count',1)
-
-#
-# X_train, X_test, y_train, y_test = train_test_split(X,y, random_state = 1)
 
 '''
     Recommend most favorited:
@@ -79,9 +60,6 @@ def recommend_most_fav(user_id, utility_matrix, most_favs):
     Recommend by random sampling from favorite distribution:
 '''
 
-# Distribution of favorited content ids:
-fav_dist = fav.content_id
-
 def recommend_random_fav(dist, number):
     '''
     Recommend document by randomly sampling distribution of favorited docs.
@@ -95,23 +73,6 @@ def recommend_random_fav(dist, number):
     '''
 
     return np.random.choice(dist, size=number)
-
-# Create utility matrix only for those who have favorited at least one doc:
-mask_favs = (utility.drop('UserID',1) > 0).any(axis=1)
-utility_favs = utility[mask_favs].reset_index(drop=True)
-
-# Create utility matrix only for those who have dowloaded at least one doc:
-mask_dlds = (utility_dld.drop('UserID',1) > 0).any(axis=1)
-utility_d = utility_dld[mask_dlds].reset_index(drop=True)
-
-
-# Create utility matrix only for those who have not favorited anything (newusrs):
-mask_new = (utility.drop('UserID',1) == 0).all(axis=1)
-utility_new = utility[mask_new].reset_index(drop=True)
-
-# Create utility matrix only for those who have not downloaded anything (newusrs):
-mask_d_new = (utility_dld.drop('UserID',1) == 0).all(axis=1)
-utility_d_new = utility_dld[mask_d_new].reset_index(drop=True)
 
 def plot_hist_basic(df, col):
     """
@@ -153,10 +114,6 @@ def plot_kde(df, col):
 
     return ax
 
-plot_kde(fav,'content_id')
-# plt.savefig('figures/research_faves_kde.png')
-plt.show()
-
 '''
     Recommend most recent, according to subject preference:
 '''
@@ -192,12 +149,85 @@ def score_baseline(utility, favorites):
 
     return accuracy
 
-top_fav_score = float(top_favs.max())/len(utility_favs)
-random_fav_score = score_baseline(utility_favs,fav_dist)
+'''
+------------------------------------------------------------------------------
+'''
+if __name__ == '__main__':
+    start_time = time()
 
-print "The most naive baselines are:"
-print "Recommending top favorite: ", top_fav_score
-print "Recommending random favorite: ", random_fav_score
+    # Import utility matrix:
 
-end_time = time()
-print "Time elapsed: ", end_time - start_time
+    utility = pd.read_csv('data/modified_data/utility_matrix.csv') # OR:
+    # utility = pd.read_csv('data/modified_data/utility_matrix.csv').drop(['Unnamed: 0'],axis=1)
+
+    utility_dld = pd.read_csv('data/modified_data/utility_dld_matrix.csv')
+
+    # fav = pd.read_csv('data/metadata/User-Research-Favorites.csv')
+    fav = pd.read_csv('data/modified_data/user-favorites.csv')
+    top_favs = fav.content_id.value_counts()
+
+    fav_list = top_favs.to_frame().rename(columns={'content_id':'count'}). \
+        reset_index().rename(columns={'index':'content_id'}).drop('count',1)
+
+    #
+    # X_train, X_test, y_train, y_test = train_test_split(X,y, random_state = 1)
+
+    # Distribution of favorited content ids:
+    fav_dist = fav.content_id
+
+    # Create utility matrix only for those who have favorited at least one doc:
+    mask_favs = (utility.drop('UserID',1) > 0).any(axis=1)
+    utility_favs = utility[mask_favs].reset_index(drop=True)
+
+    # Create utility matrix only for those who have dowloaded at least one doc:
+    mask_dlds = (utility_dld.drop('UserID',1) > 0).any(axis=1)
+    utility_d = utility_dld[mask_dlds].reset_index(drop=True)
+
+
+    # Create utility matrix only for those who have not favorited anything (newusrs):
+    mask_new = (utility.drop('UserID',1) == 0).all(axis=1)
+    utility_new = utility[mask_new].reset_index(drop=True)
+
+    # Create utility matrix only for those who have not downloaded anything (newusrs):
+    mask_d_new = (utility_dld.drop('UserID',1) == 0).all(axis=1)
+    utility_d_new = utility_dld[mask_d_new].reset_index(drop=True)
+
+    plot_kde(fav,'content_id')
+    # plt.savefig('figures/research_faves_kde.png')
+    plt.show()
+
+    # Distribution of downloads by users:
+    usd = pd.read_csv('data/modified_data/user-downloads.csv')
+    top_dld_users = usd.UserID.value_counts()
+
+    usd.UserID.hist(bins=100,grid=False)
+    plt.xlabel('User ID')
+    plt.ylabel('Count')
+    plt.title('User Downloads')
+    # plt.savefig('figures/userid_dld_hist.png')
+    plt.show()
+
+    user_dlds =  top_dld_users.to_frame().rename(columns={'UserID':'count'}). \
+        reset_index().rename(columns={'index':'UserID'})
+    user_dlds['Prop'] = user_dlds['count']/user_dlds['count'].sum()
+    # user_dlds.to_csv('data/modified_data/top_downloads_users.csv',index=False)
+
+    prop = user_dlds.Prop.values
+    index = 100
+    print "The top {} users represent {} of the download data.".format(index,
+        np.sum(prop[0:index]))
+    index = 500
+    print "The top {} users represent {} of the download data.".format(index,
+        np.sum(prop[0:index]))
+
+    # Scores:
+
+    top_fav_score = float(top_favs.max())/len(utility_favs)
+    random_fav_score = score_baseline(utility_favs,fav_dist)
+
+    print "The most naive baselines are:"
+    print "Recommending top favorite: ", top_fav_score
+    print "Recommending random favorite: ", random_fav_score
+
+    end_time = time()
+    print "Time elapsed: ", end_time - start_time

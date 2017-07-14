@@ -94,37 +94,41 @@ def jaccard_update(utility, sim, utility_entry, axis=1, return_util=True, timer=
 
     start_time = time()
 
-    df_copy = utility.copy()
+    util_copy = utility.copy()
+    sim_copy = sim.copy()
     user = utility_entry[0]
-    item = str(utility_entry[1])
-    df_copy.loc[df_copy.UserID == user, [item]] = 0
-    df_copy = df_copy.drop(['UserID'], axis=1)
+    # item = str(utility_entry[1])
+    item = utility_entry[1]
+    util_copy.loc[util_copy.UserID == user, [item]] = 0
+    users = util_copy.pop('UserID')
+    # util_copy = util_copy.drop(['UserID'], axis=1)
 
-    dimen = df_copy.shape[axis]
+    dimen = util_copy.shape[axis]
 
     if axis == 0:
-        df_copy = df_copy.T
+        util_copy = util_copy.T
 
-    index = df_copy.columns.get_loc(item)
-    vec1 = df_copy.iloc[:,index]
+    index = util_copy.columns.get_loc(item)
+    vec1 = util_copy.iloc[:,index]
     for i in xrange(dimen):
         if i != index:
-            vec2 = df_copy.iloc[:,i]
+            vec2 = util_copy.iloc[:,i]
             jd = jaccard_dist(vec1,vec2)
-            sim.iloc[index,i] = jd
-            sim.iloc[i,index] = jd
+            sim_copy.iloc[index,i] = jd
+            sim_copy.iloc[i,index] = jd
 
     if return_util:
-        utility.loc[df_copy.UserID == user, [item]] = 0
-    del df_copy
+        utility.loc[utility.UserID == user, [item]] = 1
+        util_copy.insert(0,'UserID',users)
+    # del util_copy
 
     if timer:
         print "Jaccard update took: ", time() - start_time
 
     if return_util:
-        return sim, Utiility
+        return sim_copy, sim, util_copy, utility
     else:
-        return sim
+        return sim_copy
 
 def cos_dist(a,b):
     '''

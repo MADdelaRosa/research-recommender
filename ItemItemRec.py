@@ -9,13 +9,13 @@ class ItemItemRec(object):
 
     def __init__(self, n_size):
 
-        self.neighborhod = neighborhood
+        self.n_size = n_size
 
     def fit(self, utility_matrix, prev_fit=True, fav=True):
 
         self.utility_matrix = utility_matrix
         self.n_users = utility_matrix.shape[0]
-        self.n_items = utility_matrix.shape[1]
+        self.n_items = utility_matrix.shape[1] - 1
         self.col_labels = utility_matrix.columns.values
         self.usr_ids = utility_matrix.UserID.values
         self._load_favorite_dist()
@@ -37,14 +37,15 @@ class ItemItemRec(object):
     def _set_neighborhoods(self):
 
         sim_indeces = np.argsort(self.sim_mat, 1).values
-        self.neighborhoods = sim_indeces[:, -self.neighborhod:]
+        # self.neighborhoods = sim_indeces[:, -self.n_size:]
+        self.neighborhoods = sim_indeces[:, 0:self.n_size]
 
     def rec_one_user(self, user, rec_num = 3, wide = True, timer=False):
 
         start_time = time()
-        user_ind = self.utility_matrix[utility_matrix.UserID == user].index[0]
-        user_items = self.utility_matrix[utility_matrix.UserID == user]. \
-            drop(['UserID'].axis=1).values.nonzero()[1]
+        user_ind = self.utility_matrix[self.utility_matrix.UserID == user].index[0]
+        user_items = self.utility_matrix[self.utility_matrix.UserID == user]. \
+            drop(['UserID'],axis=1).values.nonzero()[1]
 
         item_score = np.zeros(self.n_items)
         for item in xrange(self.n_items):
@@ -58,7 +59,7 @@ class ItemItemRec(object):
 
             recommend = []
             i = -1
-            while len(recommend) < rec_num:
+            while (len(recommend) < rec_num) and (abs(i) <= len(top_indeces)):
                 index = top_indeces[i] + 1 # account for UserID column
 
                 if self.utility_matrix.iloc[user_ind, index] == 0:
@@ -68,13 +69,16 @@ class ItemItemRec(object):
                     i -= 1
                 else:
                     hood = self.neighborhoods[index-1]
-                    for j in xrange(len(hood)-1,-1,-1):
-                        hood_ind = hood[j] + 1 # account for UserID column
-                        if self.utility_matrix.iloc[user_ind, hood_ind] == 0:
-                            recommend.append[hood_ind]
+                    # for j in xrange(len(hood)-1,-1,-1):
+                    for j in xrange(len(hood)):
+                        if len(recommend) < rec_num:
+                            hood_ind = hood[j] + 1 # account for UserID column
+                            if self.utility_matrix.iloc[user_ind, hood_ind] == 0:
+                                recommend.append(hood_ind)
                     i -= 1
 
             recommend = np.array(recommend)
+            # print recommend
 
             rec_items = self.col_labels[recommend]
         else:
@@ -103,14 +107,26 @@ class ItemItemRec(object):
 
         entry = (user, item)
 
-        self.sim_mat, self.utility_matrix = jaccard_update(self.utility_matrix,
-            self.sim_mat, entry, axis=1)
+        self.sim_mat, prev_sim, self.utility_matrix, prev_util = \
+            jaccard_update(self.utility_matrix, self.sim_mat, entry, axis=1)
 
-        recommennd = self.rec_one_user(user, rec_num, wide)
+
+        print "Util val: "
+        print self.utility_matrix.loc[self.utility_matrix.UserID == user, [item]]
+        recommend = self.rec_one_user(user, rec_num, wide)
+        print "For item: ", item
+        print "Recommended docs: ", recommend
 
         rec_entry = np.in1d(item, recommend)
+        print "Recommended item? ", rec_entry
+        self.sim_mat = prev_sim
+        self.utility_matrix = prev_util
+        del prev_sim
+        del prev_util
+        print "Util val: "
+        print self.utility_matrix.loc[self.utility_matrix.UserID == user, [item]]
 
         if timer:
             print "Prediction time: {} seconds".format(time()-start_time)
 
-        return rec_entry
+        return rec_entry[0]
