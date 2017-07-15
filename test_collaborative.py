@@ -6,6 +6,7 @@ from ItemItemRec import ItemItemRec
 from collaborative_filtering import jaccard_dist, jaccard_mat, jaccard_update
 from baseline import recommend_random_fav
 from time import time
+import gc
 
 TEST_0 = False
 
@@ -94,6 +95,7 @@ if VALIDATE:
     # cutoff = 10
     # cutoff = 10
     top_users = user_dlds.UserID.values[0:cutoff]
+    # top_users = user_dlds.UserID.values[cutoff:2*cutoff]
 
     # Initialize recommender:
 
@@ -120,6 +122,11 @@ if VALIDATE:
 
         # print "Launch recommender"
         test = recommender.leave_one_out(user,one_out,rec_num=50,wide=True,timer=False)
+
+        # garbage collect
+        if count % 10 == 0:
+            collected = gc.collect()
+            print "Garbage collector: collected %d objects." % (collected)
 
         # print "Append to prediction list"
         prediction.append(test)
