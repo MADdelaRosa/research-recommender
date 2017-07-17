@@ -2,7 +2,7 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 from time import time
-from collaborative_filtering import jaccard_dist, cos_dist, jaccard_mat, jaccard_update
+from collaborative_filtering import jaccard_dist, cos_sim, jaccard_mat, jaccard_update
 from baseline import recommend_random_fav
 
 class ItemItemRec(object):

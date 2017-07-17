@@ -23,7 +23,7 @@ uscon = pd.read_csv('data/metadata/User-Conversations.csv')
 sol = pd.read_csv('data/metadata/Solution-Providers.csv')
 
 # This is a mess:
-allres = pd.read_csv('data/metadata/AllResearch-Incl-Purged.csv')
+# allres = pd.read_csv('data/metadata/AllResearch-Incl-Purged.csv')
 
 
 # Dataframe of only paid member accounts:
@@ -81,34 +81,34 @@ print 'Out of {} total download dates.'.format(dld_ext.shape[0])
 '''
 Favorites data:
 '''
-
-fav.UserID.hist(grid=False,bins=100)
-plt.xlabel('User ID')
-plt.ylabel('Count')
-# plt.savefig('figures/user_faves.png')
-plt.show()
-
-fav.content_id.hist(grid=False,bins=100)
-plt.xlabel('Content ID')
-plt.ylabel('Count')
-# plt.savefig('figures/research_faves.png')
-plt.show()
-
-# Plot downloads/favorites together:
-
-# Downloads from usd:
-usd.content_id.hist(grid=False,bins=100)
-plt.xlabel('Content ID')
-plt.ylabel('Count')
-# plt.savefig('figures/content_downloads_usd.png')
-plt.show()
 #
-usd.content_id.hist(grid=False,bins=100,normed=True)
-fav.content_id.hist(grid=False,bins=100,normed=True)
-plt.xlabel('Content ID')
-plt.ylabel('Count')
-# plt.savefig('figures/research_dlds_faves.png')
-plt.show()
+# fav.UserID.hist(grid=False,bins=100)
+# plt.xlabel('User ID')
+# plt.ylabel('Count')
+# # plt.savefig('figures/user_faves.png')
+# plt.show()
+#
+# fav.content_id.hist(grid=False,bins=100)
+# plt.xlabel('Content ID')
+# plt.ylabel('Count')
+# # plt.savefig('figures/research_faves.png')
+# plt.show()
+#
+# # Plot downloads/favorites together:
+#
+# # Downloads from usd:
+# usd.content_id.hist(grid=False,bins=100)
+# plt.xlabel('Content ID')
+# plt.ylabel('Count')
+# # plt.savefig('figures/content_downloads_usd.png')
+# plt.show()
+# #
+# usd.content_id.hist(grid=False,bins=100,normed=True)
+# fav.content_id.hist(grid=False,bins=100,normed=True)
+# plt.xlabel('Content ID')
+# plt.ylabel('Count')
+# # plt.savefig('figures/research_dlds_faves.png')
+# plt.show()
 
 '''
 Research document inconsistencies.
@@ -248,6 +248,9 @@ res_dl = np.sort(np.array(list(C)))
 
 res_all = np.sort(np.array(list(TD)))
 
+# np.save('data/modified_data/downloads.npy',res_dl)
+# np.save('data/modified_data/content.npy',res_all)
+
 
 '''
 User ID inconsistencies.
@@ -383,6 +386,8 @@ smd.sort_index(inplace=True)
 
 smd.reset_index(inplace=True)
 
+# smd.to_csv('data/modified_data/subject_metadata.csv',index=False)
+
 # Area 21 is not a real Subject Area, so we must drop users who ONLY selected it:
 
 sa21 = usa[usa.SubjectAreaID == 21].UserID
@@ -466,6 +471,7 @@ Create Utility Matrix:
 # usr_mod = np.sort(np.setdiff1d(all_usr,drop_usr))
 
 usr_mod =  np.sort(np.array(list(UU - MM)))
+# np.save('data/modified_data/users.npy',usr_mod)
 
 # Recast into string
 # res_str = res_all.astype(str)

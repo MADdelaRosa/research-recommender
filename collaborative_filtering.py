@@ -130,7 +130,7 @@ def jaccard_update(utility, sim, utility_entry, axis=1, return_util=True, timer=
     else:
         return sim_copy
 
-def cos_dist(a,b):
+def cos_sim(a,b):
     '''
     Conputes Cosine distance between two vectors a and b
 

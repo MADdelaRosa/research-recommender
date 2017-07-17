@@ -91,16 +91,16 @@ if VALIDATE:
 
     user_dlds = pd.read_csv('data/modified_data/top_downloads_users.csv')
     # cutoff = 500    # corresponds to 30% of download signal
-    cutoff = 250
+    cutoff = 22020
     # cutoff = 10
     # cutoff = 10
-    # top_users = user_dlds.UserID.values[0:cutoff]
-    top_users = user_dlds.UserID.values[cutoff:2*cutoff]
+    top_users = user_dlds.UserID.values[0:cutoff]
+    # top_users = user_dlds.UserID.values[cutoff:2*cutoff]
 
     # Initialize recommender:
 
     # recommender = ItemItemRec(n_size=290)
-    recommender = ItemItemRec(n_size=10)
+    recommender = ItemItemRec(n_size=50)
     recommender.fit(utility_dld, prev_fit=True, fav=False)
 
     prediction = []
@@ -121,7 +121,7 @@ if VALIDATE:
         print one_out
 
         # print "Launch recommender"
-        test = recommender.leave_one_out(user,one_out,rec_num=50,wide=True,timer=False)
+        test = recommender.leave_one_out(user,one_out,rec_num=5,wide=True,timer=False)
 
         # garbage collect
         if count % 5 == 0:

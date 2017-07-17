@@ -192,6 +192,8 @@ if __name__ == '__main__':
     mask_d_new = (utility_dld.drop('UserID',1) == 0).all(axis=1)
     utility_d_new = utility_dld[mask_d_new].reset_index(drop=True)
 
+
+    # Favorites distribution
     plot_kde(fav,'content_id')
     # plt.savefig('figures/research_faves_kde.png')
     plt.show()
@@ -207,10 +209,42 @@ if __name__ == '__main__':
     # plt.savefig('figures/userid_dld_hist.png')
     plt.show()
 
+    # Save top download information
     user_dlds =  top_dld_users.to_frame().rename(columns={'UserID':'count'}). \
         reset_index().rename(columns={'index':'UserID'})
     user_dlds['Prop'] = user_dlds['count']/user_dlds['count'].sum()
     # user_dlds.to_csv('data/modified_data/top_downloads_users.csv',index=False)
+
+    user_dlds['count'].hist(grid=False,bins=300)
+    plt.xlabel('Downloads/User')
+    plt.ylabel('Count')
+    plt.title('Downloads per User Distribution')
+    # plt.savefig('figures/dlds_per_user_dist.png')
+    plt.show()
+
+    user_dlds['count'].hist(grid=False,bins=300,normed=True)
+    plt.xlabel('Downloads/User')
+    plt.ylabel('Count')
+    plt.title('Downloads per User Distribution')
+    # plt.savefig('figures/dlds_per_user_dist_norm.png')
+    plt.show()
+
+    top_users = user_dlds[user_dlds['count'] > user_dlds['count'].mean()]
+    print "Percent of downloads downloaded by top users (mean): ", tops.Prop.sum()
+    tops['count'].hist(grid=False,bins=22)
+    plt.xlabel('Downloads/User')
+    plt.ylabel('Count')
+    plt.title('Downloads/User, Most Active Users')
+    # plt.savefig('figures/dlds_per_user_dist_most.png')
+    plt.show()
+
+    tops[tops['count'] > 500]['count'].hist(grid=False)
+    plt.xlabel('Downloads/User')
+    plt.ylabel('Count')
+    plt.title('Downloads/User, Most Active Users (>500)')
+    # plt.savefig('figures/dlds_per_user_dist_most_500.png')
+    plt.show()
+
 
     prop = user_dlds.Prop.values
     index = 100
