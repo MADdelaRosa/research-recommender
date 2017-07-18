@@ -111,8 +111,8 @@ class ItemItemRec(object):
             jaccard_update(self.utility_matrix, self.sim_mat, entry, axis=1)
 
 
-        print "Util val: "
-        print self.utility_matrix.loc[self.utility_matrix.UserID == user, [item]]
+        # print "Util val: "
+        # print self.utility_matrix.loc[self.utility_matrix.UserID == user, [item]]
         recommend = self.rec_one_user(user, rec_num, wide)
         print "For item: ", item
         print "Recommended docs: ", recommend
@@ -123,10 +123,10 @@ class ItemItemRec(object):
         self.utility_matrix = prev_util
         del prev_sim
         del prev_util
-        print "Util val: "
-        print self.utility_matrix.loc[self.utility_matrix.UserID == user, [item]]
+        # print "Util val: "
+        # print self.utility_matrix.loc[self.utility_matrix.UserID == user, [item]]
 
         if timer:
             print "Prediction time: {} seconds".format(time()-start_time)
 
-        return rec_entry[0]
+        return rec_entry[0], recommend

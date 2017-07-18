@@ -145,7 +145,11 @@ def cos_sim(a,b):
     a_norm = np.sqrt(np.dot(a,a))
     b_norm = np.sqrt(np.dot(b,b))
 
-    dist = np.dot(a,b)/(a_norm * b_norm)
+    num = np.dot(a,b)
+    denom = a_norm * b_norm
+
+    # dist = np.dot(a,b)/(a_norm * b_norm)
+    dist = num/denom
 
     return dist
 

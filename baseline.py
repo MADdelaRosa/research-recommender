@@ -118,7 +118,30 @@ def plot_kde(df, col):
     Recommend most recent, according to subject preference:
 '''
 
+def recent_subject(user, user_subjects, subject_areas):
+    '''
+    Recommends most recent item in user's chosen subject area:
 
+    INPUT:
+    user: (int) User ID
+    user_subjects: (pandas Dataframe) Users' chosen subject areas
+    subject_areas: (pandas Dataframe) Subject area metadata
+
+    OUTPUT:
+    rec: (int) Content ID of recommended document
+    '''
+    usa_mat = user_subjects.values
+
+    mask = (usa_mat[:,0] == user)
+
+    areas = np.array(zip(*usa_mat[mask][1]))
+
+    area = np.random.choice(areas)
+
+    area_name = subject_areas.loc[subject_areas.SubjectAreaID == area,\
+        ['SubjectAreaName']].values.flatten()[0]
+
+    return rec
 
 
 '''
@@ -154,6 +177,8 @@ def score_baseline(utility, favorites):
 '''
 if __name__ == '__main__':
     start_time = time()
+
+    plot = False
 
     # Import utility matrix:
 
@@ -192,22 +217,22 @@ if __name__ == '__main__':
     mask_d_new = (utility_dld.drop('UserID',1) == 0).all(axis=1)
     utility_d_new = utility_dld[mask_d_new].reset_index(drop=True)
 
-
     # Favorites distribution
-    plot_kde(fav,'content_id')
-    # plt.savefig('figures/research_faves_kde.png')
-    plt.show()
+    if plot:
+        plot_kde(fav,'content_id')
+        # plt.savefig('figures/research_faves_kde.png')
+        plt.show()
 
     # Distribution of downloads by users:
     usd = pd.read_csv('data/modified_data/user-downloads.csv')
     top_dld_users = usd.UserID.value_counts()
-
-    usd.UserID.hist(bins=100,grid=False)
-    plt.xlabel('User ID')
-    plt.ylabel('Count')
-    plt.title('User Downloads')
-    # plt.savefig('figures/userid_dld_hist.png')
-    plt.show()
+    if plot:
+        usd.UserID.hist(bins=100,grid=False)
+        plt.xlabel('User ID')
+        plt.ylabel('Count')
+        plt.title('User Downloads')
+        # plt.savefig('figures/userid_dld_hist.png')
+        plt.show()
 
     # Save top download information
     user_dlds =  top_dld_users.to_frame().rename(columns={'UserID':'count'}). \
@@ -216,34 +241,36 @@ if __name__ == '__main__':
     # user_dlds.to_csv('data/modified_data/top_downloads_users.csv',index=False)
 
     user_dlds['count'].hist(grid=False,bins=300)
-    plt.xlabel('Downloads/User')
-    plt.ylabel('Count')
-    plt.title('Downloads per User Distribution')
-    # plt.savefig('figures/dlds_per_user_dist.png')
-    plt.show()
+    if plot:
+        plt.xlabel('Downloads/User')
+        plt.ylabel('Count')
+        plt.title('Downloads per User Distribution')
+        # plt.savefig('figures/dlds_per_user_dist.png')
+        plt.show()
 
-    user_dlds['count'].hist(grid=False,bins=300,normed=True)
-    plt.xlabel('Downloads/User')
-    plt.ylabel('Count')
-    plt.title('Downloads per User Distribution')
-    # plt.savefig('figures/dlds_per_user_dist_norm.png')
-    plt.show()
+        user_dlds['count'].hist(grid=False,bins=300,normed=True)
+        plt.xlabel('Downloads/User')
+        plt.ylabel('Count')
+        plt.title('Downloads per User Distribution')
+        # plt.savefig('figures/dlds_per_user_dist_norm.png')
+        plt.show()
 
-    top_users = user_dlds[user_dlds['count'] > user_dlds['count'].mean()]
+    tops = user_dlds[user_dlds['count'] > user_dlds['count'].mean()]
     print "Percent of downloads downloaded by top users (mean): ", tops.Prop.sum()
-    tops['count'].hist(grid=False,bins=22)
-    plt.xlabel('Downloads/User')
-    plt.ylabel('Count')
-    plt.title('Downloads/User, Most Active Users')
-    # plt.savefig('figures/dlds_per_user_dist_most.png')
-    plt.show()
+    if plot:
+        tops['count'].hist(grid=False,bins=22)
+        plt.xlabel('Downloads/User')
+        plt.ylabel('Count')
+        plt.title('Downloads/User, Most Active Users')
+        # plt.savefig('figures/dlds_per_user_dist_most.png')
+        plt.show()
 
-    tops[tops['count'] > 500]['count'].hist(grid=False)
-    plt.xlabel('Downloads/User')
-    plt.ylabel('Count')
-    plt.title('Downloads/User, Most Active Users (>500)')
-    # plt.savefig('figures/dlds_per_user_dist_most_500.png')
-    plt.show()
+        tops[tops['count'] > 500]['count'].hist(grid=False)
+        plt.xlabel('Downloads/User')
+        plt.ylabel('Count')
+        plt.title('Downloads/User, Most Active Users (>500)')
+        # plt.savefig('figures/dlds_per_user_dist_most_500.png')
+        plt.show()
 
 
     prop = user_dlds.Prop.values

@@ -200,7 +200,8 @@ def update_user_profile(user_profile, utility_matrix, item_profile, entry, out=T
     user_profile.drop(['UserID'],axis=1,inplace=True)
 
     content_ids = item_profile.content_id
-    item_index = item_profile[item_profile.content_id == item].index[0]
+    # print "Items type: ", (item, type(item))
+    item_index = item_profile[item_profile.content_id == int(item)].index[0]
     item_profile.drop(['content_id'],axis=1,inplace=True)
     item_prof = item_profile.values
 
@@ -263,7 +264,8 @@ def content_profile_recommender(user,items,user_profile,item_profile,rec_num = 3
     item_prof = item_profile.values
 
     for i, item in enumerate(items):
-        item_index = np.where(content_ids == str(item))[0][0]
+        # print "Item type: ", (item, type(item))
+        item_index = np.where(content_ids == int(item))[0][0]
 
         item_vect = item_prof[item_index]
 
@@ -283,7 +285,7 @@ def content_profile_recommender(user,items,user_profile,item_profile,rec_num = 3
     if timer:
         print "User profile matrix time: ", (time() - start_time)
 
-    pass recommend
+    return recommend
 
 
 '''
@@ -364,9 +366,9 @@ if __name__ == '__main__':
     # user_profiles = populate_user_profile(user_profiles, utility, item_features)
     # user_profiles.to_csv('data/modified_data/user_profile',index=False)
 
-    user_profiles.insert(0, 'UserID', usr_mod)
-    utility.insert(0, 'UserID', usr_mod)
-    item_features.insert(0, 'content_id', res_all)
+    # user_profiles.insert(0, 'UserID', usr_mod)
+    # utility.insert(0, 'UserID', usr_mod)
+    # item_features.insert(0, 'content_id', res_all)
 
     user_profiles_lim = pd.DataFrame(zero_data_users_lim, columns=features_lim, dtype=int)
     user_profiles_lim.insert(0, 'UserID', usr_mod)
