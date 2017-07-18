@@ -118,7 +118,7 @@ def plot_kde(df, col):
     Recommend most recent, according to subject preference:
 '''
 
-def recent_subject(user, user_subjects, subject_areas):
+def recent_subject(user, user_subjects, subject_areas, most_recent_items):
     '''
     Recommends most recent item in user's chosen subject area:
 
@@ -126,22 +126,40 @@ def recent_subject(user, user_subjects, subject_areas):
     user: (int) User ID
     user_subjects: (pandas Dataframe) Users' chosen subject areas
     subject_areas: (pandas Dataframe) Subject area metadata
+    most_recent_items: (pandas Dataframe) Most recent items by subject
 
     OUTPUT:
-    rec: (int) Content ID of recommended document
+    rec: (str) Content ID of recommended document
     '''
     usa_mat = user_subjects.values
 
     mask = (usa_mat[:,0] == user)
 
-    areas = np.array(zip(*usa_mat[mask][1]))
+    areas = np.array(zip(*usa_mat[mask])[1])
 
     area = np.random.choice(areas)
 
-    area_name = subject_areas.loc[subject_areas.SubjectAreaID == area,\
-        ['SubjectAreaName']].values.flatten()[0]
+    area_n = subject_areas.loc[subject_areas.SubjectAreaID == area,\
+        ['SubjectAreaName']].values
 
-    return rec
+    if area_n:
+        area_name = area_n.flatten()[0]
+
+        reco = most_recent_items.loc[most_recent_items.primary_subject_area == \
+            area_name, ['content_id']].values
+
+        # print reco
+
+        if reco:
+            rec = reco.flatten()[0]
+            # rec = most_recent_items.loc[most_recent_items.primary_subject_area == \
+            #     area_name, ['content_id']].values.flatten()[0]
+
+            return str(rec)
+        else:
+            return None
+    else:
+        return None
 
 
 '''
@@ -172,6 +190,94 @@ def score_baseline(utility, favorites):
 
     return accuracy
 
+def score_most_recent(user_subjects, subject_areas, most_recent_items, utility):
+    '''
+    Calculates accuracy score of present recommender (most recent from subject).
+
+    INPUT:
+    user: (int) User ID
+    user_subjects: (pandas Dataframe) Users' chosen subject areas
+    subject_areas: (pandas Dataframe) Subject area metadata
+    most_recent_items: (pandas Dataframe) Most recent items by subject
+    utility: (Pandas DataFrame) Utility matrix of users who have dld data
+
+    OUTPUT:
+    score: (float) Accuracy score
+    '''
+    start_time = time()
+
+    users = utility.UserID.values
+    num_users = len(users)
+
+    predictions = []
+    count = 1
+    for user in users:
+        # print count, user
+
+        rec = recent_subject(user, user_subjects, subject_areas, most_recent_items)
+
+        if rec != None:
+            val = utility.loc[utility.UserID == user, [rec]].values.flatten()[0]
+        else:
+            val = 0
+
+        predictions.append(val)
+
+        count += 1
+
+    score = float(sum(predictions))/num_users
+
+    print "Elapsed time: ", (time() - start_time)
+
+    # return predictions
+    return score, predictions
+
+def score_most_recent_subset(user_subjects, subject_areas, most_recent_items,
+    utility, users, both=False):
+    '''
+    Calculates accuracy score of present recommender (most recent from subject).
+
+    INPUT:
+    user: (int) User ID
+    user_subjects: (pandas Dataframe) Users' chosen subject areas
+    subject_areas: (pandas Dataframe) Subject area metadata
+    most_recent_items: (pandas Dataframe) Most recent items by subject
+    utility: (Pandas DataFrame) Utility matrix of users who have dld data
+    users: (numpy array) Users of interest
+
+    OUTPUT:
+    score: (float) Accuracy score
+    '''
+
+    start_time = time()
+
+    num_users = len(users)
+
+    predictions = []
+    count = 1
+    for user in users:
+        # print count, user
+
+        rec = recent_subject(user, user_subjects, subject_areas, most_recent_items)
+
+        if rec != None:
+            val = utility.loc[utility.UserID == user, [rec]].values.flatten()[0]
+        else:
+            val = 0
+
+        predictions.append(val)
+
+        count += 1
+
+    score = float(sum(predictions))/num_users
+
+    print "Elapsed time: ", (time() - start_time)
+
+    if both:
+        return score, predictions
+    else:
+        return predictions
+
 '''
 ------------------------------------------------------------------------------
 '''
@@ -196,6 +302,9 @@ if __name__ == '__main__':
 
     #
     # X_train, X_test, y_train, y_test = train_test_split(X,y, random_state = 1)
+
+    smd = pd.read_csv('data/modified_data/subject_metadata.csv')
+    usa = pd.read_csv('data/metadata/User-SubjectArea.csv')
 
     # Distribution of favorited content ids:
     fav_dist = fav.content_id
@@ -239,6 +348,7 @@ if __name__ == '__main__':
         reset_index().rename(columns={'index':'UserID'})
     user_dlds['Prop'] = user_dlds['count']/user_dlds['count'].sum()
     # user_dlds.to_csv('data/modified_data/top_downloads_users.csv',index=False)
+    # user_dlds = pd.read_csv('data/modified_data/top_downloads_users.csv')
 
     user_dlds['count'].hist(grid=False,bins=300)
     if plot:
@@ -281,14 +391,32 @@ if __name__ == '__main__':
     print "The top {} users represent {} of the download data.".format(index,
         np.sum(prop[0:index]))
 
+    # Research by subject area:
+
+    rmd = pd.read_csv('data/metadata/ResearchMetadata.csv')
+    rmd_mod = rmd[['content_id','publish_date','primary_subject_area']].copy()
+    recent_subj_id = rmd_mod.groupby(['primary_subject_area'],as_index=False).max()
+    # recent_subj_id.to_csv('data/modified_data/recent_by_subject.csv')
+
     # Scores:
 
     top_fav_score = float(top_favs.max())/len(utility_favs)
     random_fav_score = score_baseline(utility_favs,fav_dist)
+    # score, preds = score_most_recent(usa,smd,recent_subj_id,utility_dld)
+    ''' Takes too long, score is: '''
+    score = 0.0071465
+
+    cutoff = 500
+    top_users = user_dlds.UserID.values[0:cutoff]
+    top_score, top_predicitons = score_most_recent_subset(usa,smd,recent_subj_id,
+        utility_dld,top_users)
+
 
     print "The most naive baselines are:"
     print "Recommending top favorite: ", top_fav_score
     print "Recommending random favorite: ", random_fav_score
+    print "Recommending most recent: ", score
+    print "Recommending most rect to top users: ", top_score
 
     end_time = time()
     print "Time elapsed: ", end_time - start_time

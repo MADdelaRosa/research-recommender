@@ -7,14 +7,14 @@ import matplotlib.pyplot as plt
 Accuracy Data:
 '''
 '''
-                            1         3       5    10       50      100'''
-acc_500_10_0  = np.array([0.00,  0.00,  0.00,   0.00,   0.184, 0.256])
-acc_500_50_0  = np.array([0.034, 0.044, 0.034,   0.00,  0.178, 0.246])
-acc_500_100_0 = np.array([0.02,  0.047, 0.07425, 0.00,  0.00, 0.258])
+                            1         3      5     10       50    100'''
+acc_500_10_0  = np.array([0.014, 0.044,    0.05,  0.09,  0.184, 0.256])
+acc_500_50_0  = np.array([0.034, 0.044,   0.034,  0.09,  0.178, 0.246])
+acc_500_100_0 = np.array([0.02,  0.047, 0.07425, 0.074,  0.176, 0.258])
 
-acc_500_10_1  = np.array([0.00,  0.00,  0.00,    0.00,  0.00,  0.19])
-acc_500_50_1  = np.array([0.00,  0.028, 0.034,   0.00,  0.106, 0.138])
-acc_500_100_1 = np.array([0.012, 0.00,  0.00,    0.00,  0.00,  0.144])
+acc_500_10_1  = np.array([0.006, 0.026,  0.038,  0.054, 0.122, 0.19])
+acc_500_50_1  = np.array([0.01,  0.028, 0.034,   0.046, 0.106, 0.138])
+acc_500_100_1 = np.array([0.012, 0.014,  0.042,  0.048, 0.128, 0.144])
 
 '''
                             1   3   5   10  50  100 '''
@@ -75,11 +75,26 @@ cols = ['Breadth', 'N-size', 'recs', 'accuracy']
 
 acc_500 = pd.DataFrame(zerodata, columns=cols)
 
+x = acc_500.iloc[0:6,2].values
+y = acc_500.iloc[0:6,3].values
+plt.plot(x,y,'b.-', label='N=10,Breadth')
 x = acc_500.iloc[6:12,2].values
 y = acc_500.iloc[6:12,3].values
-plt.plot(x,y,'b.')
+plt.plot(x,y,'g.-', label='N=50,Breadth')
+x = acc_500.iloc[12:18,2].values
+y = acc_500.iloc[12:18,3].values
+plt.plot(x,y,'r.-', label='N=100,Breadth')
+x = acc_500.iloc[18:24,2].values
+y = acc_500.iloc[18:24,3].values
+plt.plot(x,y,'b*--', label='N=10,Depth')
 x = acc_500.iloc[24:30,2].values
 y = acc_500.iloc[24:30,3].values
-plt.plot(x,y,'r.')
-plt.savefig('figures/acc_50wd_point')
+plt.plot(x,y,'g*--', label='N=50,Depth')
+x = acc_500.iloc[30:36,2].values
+y = acc_500.iloc[30:36,3].values
+plt.plot(x,y,'r*--', label='N=100,Depth')
+plt.xlabel('Number of Recommendations')
+plt.ylabel('Accuracy')
+plt.legend()
+plt.savefig('figures/acc_500.png')
 plt.close()
